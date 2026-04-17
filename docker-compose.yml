@@ -1,0 +1,85 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    env_file:
+      - backend/.env.example
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    volumes:
+      - ./backend:/app/backend
+      - ./sample-data:/app/sample-data
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    command: celery -A app.worker.celery_app worker --loglevel=INFO --queues=default
+    env_file:
+      - backend/.env.example
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    volumes:
+      - ./backend:/app/backend
+      - ./sample-data:/app/sample-data
+
+  ml-worker:
+    build:
+      context: .
+      dockerfile: infra/docker/backend-ml.Dockerfile
+    env_file:
+      - backend/.env.example
+    depends_on:
+      - redis
+      - qdrant
+      - postgres
+    volumes:
+      - ./backend:/app/backend
+      - ./sample-data:/app/sample-data
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+    env_file:
+      - frontend/.env.example
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  qdrant:
+    image: qdrant/qdrant:v1.10.1
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dsgvo
+      POSTGRES_PASSWORD: dsgvo
+      POSTGRES_DB: dsgvo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+volumes:
+  qdrant-data:
+  pg-data:

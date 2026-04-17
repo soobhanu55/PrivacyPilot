@@ -1,0 +1,5 @@
+HR Data Policy (Sample)
+
+- Employee personal data is collected for payroll and performance reviews.
+- No centralized consent evidence registry currently exists.
+- Data retention period is not explicitly defined.
