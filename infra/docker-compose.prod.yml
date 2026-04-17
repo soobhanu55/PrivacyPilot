@@ -1,0 +1,83 @@
+services:
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-backend:${IMAGE_TAG:-latest}
+    env_file:
+      - ../backend/.env.production
+    expose:
+      - "8000"
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-worker:${IMAGE_TAG:-latest}
+    command: celery -A app.worker.celery_app worker --loglevel=INFO --queues=default
+    env_file:
+      - ../backend/.env.production
+    depends_on:
+      - redis
+      - postgres
+      - qdrant
+    restart: unless-stopped
+
+  ml-worker:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-ml-worker:${IMAGE_TAG:-latest}
+    command: celery -A app.worker.celery_app worker --loglevel=INFO --queues=ml
+    env_file:
+      - ../backend/.env.production
+    depends_on:
+      - redis
+      - postgres
+      - qdrant
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-frontend:${IMAGE_TAG:-latest}
+    env_file:
+      - ../frontend/.env.production
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.10.1
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dsgvo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-dsgvo}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dsgvo} -d ${POSTGRES_DB:-dsgvo}"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  qdrant-data:
+  pg-data:

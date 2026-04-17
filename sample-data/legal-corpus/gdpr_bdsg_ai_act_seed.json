@@ -1,0 +1,20 @@
+[
+  {
+    "id": "gdpr-art-5",
+    "regulation": "DSGVO",
+    "title": "Grundsatze fur die Verarbeitung",
+    "text": "Personenbezogene Daten mussen rechtmassig, transparent und zweckgebunden verarbeitet werden."
+  },
+  {
+    "id": "bdsg-26",
+    "regulation": "BDSG",
+    "title": "Datenverarbeitung fur Beschaftigungszwecke",
+    "text": "Verarbeitung personenbezogener Beschaftigtendaten ist nur bei Erforderlichkeit zulassig."
+  },
+  {
+    "id": "eu-ai-act-risk",
+    "regulation": "EU AI Act",
+    "title": "Risikoklassifizierung von KI-Systemen",
+    "text": "Unternehmen mussen Risiken klassifizieren und geeignete Kontrollen dokumentieren."
+  }
+]

@@ -1,0 +1,37 @@
+services:
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-backend:${IMAGE_TAG:-latest}
+    env_file:
+      - ../backend/.env.production
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-worker:${IMAGE_TAG:-latest}
+    command: celery -A app.worker.celery_app worker --loglevel=INFO --queues=default
+    env_file:
+      - ../backend/.env.production
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  ml-worker:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-org}/dsgvo-copilot-ml-worker:${IMAGE_TAG:-latest}
+    command: celery -A app.worker.celery_app worker --loglevel=INFO --queues=ml
+    env_file:
+      - ../backend/.env.production
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped

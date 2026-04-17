@@ -1,0 +1,5 @@
+Marketing Data Policy (Sample)
+
+- Customer lead data is synced to third-party analytics tooling.
+- International transfer safeguards are currently unclear.
+- No documented deletion workflow for inactive leads.
