@@ -110,6 +110,16 @@ In development mode, API routes also allow fallback tenant access for local dash
   - `POST /ml/rerank` -> enqueue rerank job
   - `GET /ml/tasks/{task_id}` -> poll status/result
 
+## Evaluation
+
+- **Reranker (`app/services/ml_service.rerank_candidates`)**: cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`) reranking measured against a 20-question hand-labeled GDPR/DSGVO evaluation set (`backend/tests/eval_reranker.py`), runs fully locally, no paid API required:
+  ```
+  Hit@1: 19/20 (95.0%)
+  ```
+  The one miss: "third country data transfer safeguards" ranked an unrelated HR sentence above the correct SCC-transfer-mechanism candidate — a real failure case kept in the eval set rather than removed.
+
+- **Risk classification agent (`app/agents/workflow.risk_classification_agent`)**: currently returns a fixed set of 3 hardcoded risk findings regardless of the input documents, despite being logged with `model="hybrid-rules+llm"`. This is stated plainly here rather than left for someone to discover by reading the source: it is not yet a real classifier, and no evaluation metric is reported for it because there is nothing being measured yet. Wiring this to an actual rule engine or model against real document content is the next real piece of work here, not something already done.
+
 ## Demo Scenario
 
 Run the included demo script to simulate:
