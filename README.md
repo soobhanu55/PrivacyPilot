@@ -110,6 +110,12 @@ In development mode, API routes also allow fallback tenant access for local dash
   - `POST /ml/rerank` -> enqueue rerank job
   - `GET /ml/tasks/{task_id}` -> poll status/result
 
+## Demo
+
+Terminal recording of the real reranker evaluation (19/20 Hit@1, 95.0%) running end to end:
+
+![Terminal recording of the reranker evaluation](docs/demo.gif)
+
 ## Evaluation
 
 - **Reranker (`app/services/ml_service.rerank_candidates`)**: cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`) reranking measured against a 20-question hand-labeled GDPR/DSGVO evaluation set (`backend/tests/eval_reranker.py`), runs fully locally, no paid API required:
