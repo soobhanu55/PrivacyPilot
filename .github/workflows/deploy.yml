@@ -60,9 +60,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: ${{ secrets.DEPLOY_HOST != '' }}
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}   # secrets can't be used in a job-level `if`
     steps:
-      - name: Deploy over SSH
+      - name: Deploy over SSH (skipped unless DEPLOY_HOST secret is set)
+        if: env.DEPLOY_HOST != ''
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
