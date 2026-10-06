@@ -7,12 +7,14 @@ from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile,
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.api.deps import authenticate_tenant, get_current_tenant, get_current_tenant_role, require_roles
 from app.core.security import create_access_token, create_refresh_token, decode_refresh_token, hash_password
 from app.db.models import Tenant
 from app.db.session import get_db_session
 from app.models.schemas import (
     AnalyzeRequest,
+    AskRequest,
     LoginRequest,
     MLRerankRequest,
     PolicyRequest,
@@ -21,6 +23,7 @@ from app.models.schemas import (
     RoleUpdateRequest,
     TokenResponse,
 )
+from app.services import qa_service
 from app.services.audit_service import audit_service
 from app.services.compliance_service import compliance_service
 from app.services.persistence_service import persistence_service
@@ -147,7 +150,12 @@ async def analyze_compliance(
     _: None = Depends(require_roles("owner", "auditor")),
     session: AsyncSession = Depends(get_db_session),
 ):
-    report = await compliance_service.analyze(payload.company_id, payload.document_ids)
+    # Only this tenant's own uploads are readable: ids belonging to anyone else come back as unknown.
+    documents = await persistence_service.get_documents(session, tenant_key, payload.document_ids)
+    unknown = sorted(set(payload.document_ids) - {d["document_id"] for d in documents})
+    if unknown:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Unknown document ids: {unknown}")
+    report = await compliance_service.analyze(tenant_key, payload.company_id, documents)
     await persistence_service.save_report(session, tenant_key=tenant_key, report_payload=report.model_dump(mode="json"))
     await persistence_service.save_audit_entries(
         session, tenant_key=tenant_key, entries=[entry.model_dump(mode="json") for entry in audit_service.list_entries()]
@@ -164,7 +172,7 @@ async def risk_report(
     report = await persistence_service.latest_report(session, tenant_key=tenant_key)
     if report:
         return {"report": report}
-    fallback = await compliance_service.latest_report()
+    fallback = await compliance_service.latest_report(tenant_key)  # this tenant's in-memory report only, never another's
     return {"report": fallback.model_dump() if fallback else None}
 
 
@@ -201,7 +209,14 @@ async def knowledge_graph(
     tenant_key: str = Depends(get_current_tenant),
     _: None = Depends(require_roles("owner", "auditor", "viewer")),
 ):
-    return await compliance_service.graph_payload()
+    return await compliance_service.graph_payload(tenant_key)
+
+
+@router.post("/ask")
+async def ask_regulation(payload: AskRequest, _: None = Depends(require_roles("owner", "auditor", "viewer"))):
+    settings = get_settings()
+    return await qa_service.ask(payload.question, payload.regulations, payload.top_k,
+                                groq_key=settings.groq_api_key or None, model=settings.groq_model)
 
 
 @router.post("/ml/rerank")

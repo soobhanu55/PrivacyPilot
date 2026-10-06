@@ -1,0 +1,25 @@
+Datenschutz- und IT-Sicherheitsrichtlinie der Beispiel Software GmbH (Beispieldokument, frei erfunden)
+
+1. Geltungsbereich
+Diese Richtlinie gilt für alle 40 Beschäftigten der Beispiel Software GmbH und für alle Systeme, mit denen personenbezogene Daten von Kundinnen, Kunden und Beschäftigten verarbeitet werden.
+
+2. Verantwortlichkeiten
+Die Geschäftsführung hat Frau Dr. Weber von der Kanzlei Weber & Partner als externe Datenschutzbeauftragte benannt. Die Benennung wurde der zuständigen Landesdatenschutzbehörde angezeigt. Ihre Kontaktdaten stehen auf der Webseite und im Intranet.
+
+3. Dienstleister
+Für unser Hosting, die Lohnabrechnung und den Versand unseres Newsletters setzen wir externe Dienstleister ein. Mit jedem dieser Anbieter besteht ein Auftragsverarbeitungsvertrag nach Art. 28 DSGVO. Neue Anbieter dürfen erst nach Unterzeichnung eines solchen Vertrags genutzt werden.
+
+4. Zusammenarbeit und Werkzeuge
+Für Videokonferenzen und Dateiablage verwenden wir Microsoft 365. Unser Vertrieb pflegt Kundenkontakte in HubSpot. Beide Dienste werden von Unternehmen mit Sitz in den USA betrieben.
+
+5. Datenschutzverletzungen
+Wer eine Datenpanne bemerkt, informiert sofort die Datenschutzbeauftragte. Sie bewertet den Vorfall und meldet eine Verletzung des Schutzes personenbezogener Daten innerhalb von 72 Stunden an die Aufsichtsbehörde. Jeder Vorfall wird dokumentiert.
+
+6. IT-Sicherheit
+Alle Benutzerkonten sind mit Multi-Faktor-Authentifizierung geschützt. Laptops sind verschlüsselt, und Server werden täglich gesichert. Sicherheitsupdates werden innerhalb von sieben Tagen eingespielt.
+
+7. Künstliche Intelligenz
+Seit diesem Jahr setzen wir im Kundenservice einen Chatbot ein, der einfache Fragen zu Rechnungen beantwortet. Die Antworten werden automatisch versendet.
+
+8. Allgemeines
+Die Richtlinie wird einmal jährlich von der Geschäftsführung überprüft. Fragen beantwortet die Geschäftsführung.

@@ -4,12 +4,22 @@ Production-grade SaaS platform for continuous compliance with DSGVO (GDPR), BDSG
 
 ## Platform Capabilities
 
-- Multi-agent compliance analysis workflow with LangGraph
-- Hybrid RAG stack (dense + BM25 + cross-encoder reranking)
-- Knowledge graph for data flows and legal obligations
-- Continuous monitoring with background workers
-- Audit-ready decision logs with explainability in German
-- FastAPI backend and Next.js frontend dashboard
+- Document analysis workflow (LangGraph): read uploads, detect vendors, match 10 GDPR / NIS2 / AI Act obligations to evidence passages, score, cite articles
+- Regulation question answering over the AI Act, NIS2 and CSRD (dense retrieval; optional Groq-generated answer)
+- Knowledge graph built from the actual findings: company, vendors (flagged if outside the EU/EEA), obligations and the documents that evidence them
+- Audit log of every workflow step, with the scoring method recorded
+- Multi-tenant JWT auth with RBAC, per-tenant documents, reports and graphs
+- FastAPI backend, Next.js dashboard, Celery/Redis workers, PostgreSQL/Alembic
+
+## Analysis Pipeline
+
+1. `document_ingestion_agent` reads each uploaded file (TXT, Markdown, PDF, DOCX) and splits it into passages. Unreadable files are recorded and skipped.
+2. `data_flow_mapping_agent` finds vendors from a lexicon of 15 and flags those headquartered outside the EU/EEA.
+3. `risk_classification_agent` matches each obligation (`app/services/gap_analysis.py`) to its best evidence passage with a scorer: dense multilingual-e5 similarity when the `ml` extra is installed, keyword rules otherwise. Obligations whose topic never appears (no third-country vendor, no AI system) are marked not applicable.
+4. `recommendation_agent` computes a severity-weighted score (found = 1, review = 0.5, gap = 0) and the German summary.
+5. `audit_trail_agent` closes the audit trace.
+
+Only the tenant's own uploads are readable by `/analyze-compliance`; document ids that belong to someone else are reported as unknown. Reports and graphs are held per tenant.
 
 ## Monorepo Structure
 
@@ -93,13 +103,6 @@ In development mode, API routes also allow fallback tenant access for local dash
   - `demo-auditor` / `auditor1234`
   - `demo-viewer` / `viewer1234`
 
-## Optional ML Dependencies
-
-- Core backend images skip heavyweight local embedding stacks for faster builds.
-- To enable local cross-encoder/embedding experiments outside Docker:
-  - `cd backend`
-  - `pip install .[ml]`
-
 ## Dedicated ML Worker
 
 - `ml-worker` runs queue-isolated ML tasks with optional dependencies.
@@ -112,13 +115,22 @@ In development mode, API routes also allow fallback tenant access for local dash
 
 ## Evaluation
 
-- **Reranker (`app/services/ml_service.rerank_candidates`)**: cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`) reranking measured against a 20-question hand-labeled GDPR/DSGVO evaluation set (`backend/tests/eval_reranker.py`), runs fully locally, no paid API required:
-  ```
-  Hit@1: 19/20 (95.0%)
-  ```
-  The one miss: "third country data transfer safeguards" ranked an unrelated HR sentence above the correct SCC-transfer-mechanism candidate — a real failure case kept in the eval set rather than removed.
+Full reports: [`retrieval_eval.md`](retrieval_eval.md) and [`gap_eval.md`](gap_eval.md). Reproduce from `backend/` with `pip install .[ml]`, then `python eval/eval_retrieval.py` and `python eval/eval_gap_analysis.py`.
 
-- **Risk classification agent (`app/agents/workflow.risk_classification_agent`)**: currently returns a fixed set of 3 hardcoded risk findings regardless of the input documents, despite being logged with `model="hybrid-rules+llm"`. This is stated plainly here rather than left for someone to discover by reading the source: it is not yet a real classifier, and no evaluation metric is reported for it because there is nothing being measured yet. Wiring this to an actual rule engine or model against real document content is the next real piece of work here, not something already done.
+- **Retrieval** (37 hand-labelled questions, 178 articles, article-level): BM25 Hit@1 0.68, **dense e5-large 0.89 (Hit@5 1.00, MRR 0.94)**, BM25 + dense fusion 0.81, fusion + English cross-encoder 0.78. German questions: BM25 0.00, dense 0.80. Dense is the default. The earlier 20-question reranker eval (95% Hit@1) gave each question 3 candidates, two of them unrelated, so chance was 33%; it was removed.
+- **Gap analysis** (60 dev / 60 test synthetic documents, German and English, with hard distractors): dense scorer, unseen test split, precision of "found" 0.95, recall of found + review 0.78, 15% of unmet items routed to review. Keyword fallback: precision 1.00, recall 0.46. The documents are synthetic and written by the author, so this is an engineering check, not an accuracy claim for real policies. "Gap" means "no evidence found".
+- **Previously documented gap, now closed:** the risk-classification agent used to return three hardcoded findings for any input, the ingestion agent invented "facts" without reading documents, and the retriever was not called by anything. Those have been replaced by the pipeline above, and `tests/test_workflow.py` now asserts that the report changes with the document content.
+
+## Optional ML Dependencies
+
+- Core backend images skip heavyweight local embedding stacks for faster builds; in that image analysis uses the keyword scorer.
+- For the dense scorer and the Q&A retriever's embeddings: `cd backend && pip install .[ml]`. Thresholds are tuned for `intfloat/multilingual-e5-large`; if you change `EMBEDDING_MODEL`, re-run `eval/eval_gap_analysis.py` and update `DenseScorer.thresholds`.
+- `GROQ_API_KEY` (optional, environment only) enables generated answers in `POST /ask`.
+
+## Stub endpoints
+
+- `POST /simulate-dsar/{id}` returns a placeholder and searches no data store.
+- `POST /generate-policy` fills a fixed template and says so (`note_de`).
 
 ## Demo Scenario
 

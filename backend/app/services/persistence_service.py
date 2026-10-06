@@ -20,6 +20,15 @@ class PersistenceService:
         )
         await session.commit()
 
+    async def get_documents(self, session: AsyncSession, tenant_key: str, document_ids: list[str]) -> list[dict]:
+        """The tenant's own uploaded documents among document_ids. Always filtered by tenant_key, so ids that
+        belong to another tenant are simply not returned."""
+        stmt = select(UploadedDocument).where(
+            UploadedDocument.tenant_key == tenant_key, UploadedDocument.document_id.in_(document_ids)
+        )
+        rows = (await session.execute(stmt)).scalars().all()
+        return [{"document_id": r.document_id, "filename": r.filename, "path": r.storage_path} for r in rows]
+
     async def save_report(self, session: AsyncSession, tenant_key: str, report_payload: dict) -> None:
         session.add(
             ComplianceReportRecord(

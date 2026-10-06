@@ -15,8 +15,9 @@ celery_app.conf.task_routes = {
 
 
 @celery_app.task
-def continuous_monitoring(company_id: str, document_ids: list[str]) -> dict:
-    report = __import__("asyncio").run(compliance_service.analyze(company_id=company_id, document_ids=document_ids))
+def continuous_monitoring(tenant_key: str, company_id: str, documents: list[dict]) -> dict:
+    """documents: [{"document_id", "filename", "path"}] already resolved for the tenant."""
+    report = __import__("asyncio").run(compliance_service.analyze(tenant_key, company_id, documents))
     return report.model_dump()
 
 

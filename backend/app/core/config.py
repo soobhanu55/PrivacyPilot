@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4.1-mini"
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "dsgvo_docs"
+    groq_api_key: str = ""  # optional: enables generated answers in /ask (Groq free tier); read from the environment only
+    groq_model: str = "openai/gpt-oss-120b"
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: str = "http://localhost:3000"
     database_url: str = "postgresql+asyncpg://dsgvo:dsgvo@localhost:5432/dsgvo"

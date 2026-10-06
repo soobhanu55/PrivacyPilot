@@ -32,6 +32,16 @@ class ComplianceReport(BaseModel):
     risks: list[RiskItem]
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     next_actions_de: list[str] = Field(default_factory=list)
+    method: str = ""  # how evidence was matched: dense-embeddings or keyword-rules
+    documents_analyzed: list[str] = Field(default_factory=list)
+    not_applicable: list[str] = Field(default_factory=list)  # obligations whose topic never appears in the documents
+    data_flows: list[dict[str, Any]] = Field(default_factory=list)  # vendors found in the documents (lexicon-based)
+
+
+class AskRequest(BaseModel):
+    question: str
+    regulations: list[str] = Field(default_factory=list)  # restrict to e.g. ["NIS2"]; empty = all
+    top_k: int = 5
 
 
 class AuditLogEntry(BaseModel):
