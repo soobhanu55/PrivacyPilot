@@ -92,3 +92,27 @@ def test_metadata_filter_restricts_candidates():
     r = small_index()
     assert {d.id for d in r.retrieve("systems incidents penalties", metadata_filter={"reg": "NIS2"})} == {"b", "c"}
     assert r.retrieve("anything", metadata_filter={"reg": "nope"}) == []
+
+
+class _FakeEmbedder:
+    """One axis per sentence topic so neighbouring sentences on different topics have similarity 0."""
+
+    def encode_passages(self, texts):
+        import numpy as np
+
+        return np.array([[1.0, 0.0] if "alpha" in t else [0.0, 1.0] for t in texts])
+
+
+def test_semantic_chunks_split_at_topic_change():
+    from app.rag.chunking import semantic_chunks
+
+    text = "alpha one. alpha two. alpha three. beta one. beta two. beta three."
+    chunks = semantic_chunks(text, _FakeEmbedder(), percentile=10)
+    assert chunks == ["alpha one. alpha two. alpha three.", "beta one. beta two. beta three."]
+    assert semantic_chunks("one. two.", _FakeEmbedder()) == ["one. two."]
+
+
+def test_custom_chunker_changes_chunk_count():
+    from app.rag.chunking import whole_article
+
+    assert len(load_regulation_chunks(chunker=whole_article)) < len(load_regulation_chunks(size=60))

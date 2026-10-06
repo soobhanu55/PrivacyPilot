@@ -27,6 +27,8 @@ Both evaluations are reproducible (`python eval/eval_retrieval.py`, `python eval
 
 **Plain dense retrieval won, so it is the default.** BM25 cannot match German questions to English law text, which drags the fusion down, and the cross-encoder used here is English-only. An earlier version of this README reported "Hit@1 95%" for a reranker; that evaluation gave each question only 3 candidates (one right, two unrelated), so random chance was already 33%. It has been replaced by the harder test above.
 
+**Chunking and config search (`docs/chunking_eval.md`).** Seven chunking strategies (whole article, word windows of 60/120/250/400, semantic sentence splitting) times four retrieval modes were searched, selecting on half the questions and scoring on the other half. Dense retrieval beat BM25 at every chunk size; chunk size and semantic splitting made no reliable difference (18 test questions, intervals about +/-0.2), and the dev-selected configuration did not beat the shipped default on the held-out half, so the default stays. This absorbs the retrieval-strategy and chunking benchmark of the former RAGForge repo, with a held-out split instead of selecting and reporting on the same questions.
+
 ### Gap analysis (`docs/gap_eval.md`)
 
 Synthetic company documents with known ground truth, in German and English, including hard distractors such as "we have not appointed a DPO yet". Thresholds were tuned on a dev split and the table is the unseen test split (568 obligation/document pairs, 54% truly evidenced).
@@ -68,8 +70,9 @@ Demo login: tenant `demo-sme`, password `demo1234`. Three RBAC roles (owner/audi
 
 ```bash
 cd backend && pip install .[ml]
-pytest -q                          # 55 tests, no model download needed
+pytest -q                          # 57 tests, no model download needed
 python eval/eval_retrieval.py      # writes docs/retrieval_eval.md
+python eval/eval_chunking.py       # writes docs/chunking_eval.md (28-configuration grid, dev/test split)
 python eval/eval_gap_analysis.py   # writes docs/gap_eval.md
 ```
 

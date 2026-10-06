@@ -29,9 +29,10 @@ def chunk_words(text: str, size: int = 250, overlap: int = 40) -> list[str]:
     return [" ".join(words[i:i + size]) for i in range(0, len(words) - overlap, step)]
 
 
-def load_regulation_chunks(size: int = 250, regulations: list[str] | None = None) -> list[RetrievedDoc]:
+def load_regulation_chunks(size: int = 250, regulations: list[str] | None = None, chunker=None) -> list[RetrievedDoc]:
     """One RetrievedDoc per chunk, each tagged with regulation, article number and article title.
-    The title is prepended to the chunk text because it is the most informative few words of an article."""
+    The title is prepended to the chunk text because it is the most informative few words of an article.
+    `chunker` (text -> list[str]) overrides the default word windows of `size`; see app/rag/chunking.py."""
     docs: list[RetrievedDoc] = []
     for regulation, filename in FILES.items():
         if regulations and regulation not in regulations:
@@ -40,7 +41,7 @@ def load_regulation_chunks(size: int = 250, regulations: list[str] | None = None
         for art in data["articles"]:
             number = int(re.search(r"\d+", art["heading"]).group())
             title = clean(art["title"]).strip("`' ")
-            for i, chunk in enumerate(chunk_words(clean(art["body"]), size)):
+            for i, chunk in enumerate(chunker(clean(art["body"])) if chunker else chunk_words(clean(art["body"]), size)):
                 docs.append(RetrievedDoc(
                     id=f"{regulation}-art{number}-{i}",
                     text=f"{regulation} Article {number}: {title}. {chunk}",
