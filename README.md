@@ -77,3 +77,7 @@ python eval/eval_gap_analysis.py   # writes docs/gap_eval.md
 ```
 
 Full deployment configs, RBAC details and migrations in [`docs/DETAILS.md`](docs/DETAILS.md). The regulation text comes from EUR-Lex (CELEX 32024R1689, 32022L2555, 32022L2464); source URLs are inside `backend/app/data/regulations/*.json`.
+
+## Test coverage
+
+57 tests, **79% line coverage** of `backend/app` (CI fails below 70%). Measured with `pytest --cov=app` from `backend/`.
