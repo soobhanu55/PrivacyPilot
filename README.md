@@ -2,6 +2,8 @@
 
 Multi-tenant compliance SaaS for German SMEs. It reads a company's own policy documents, checks them against GDPR (DSGVO), NIS2 and EU AI Act obligations, and shows for each obligation either the passage that evidences it or "no evidence found", with article citations. It also answers regulation questions over the real AI Act / NIS2 / CSRD text.
 
+**Why now.** German SMEs now face GDPR, NIS2 (which widens security duties to many mid-sized companies) and the phased-in EU AI Act at once, usually without a compliance team. The AI Act's dates have moved too: the high-risk obligations were postponed to December 2027 and August 2028 under the 2026 digital-omnibus agreement ([summary](https://www.gibsondunn.com/eu-ai-act-omnibus-agreement-postponed-high-risk-deadlines-and-other-key-changes/); check the Official Journal for the final text). PrivacyPilot shows, per obligation, the passage of the company's own documents that evidences it, or says there is none.
+
 ## What it does
 
 1. **Upload** TXT, Markdown, PDF or DOCX policy documents (per tenant, role-based access: owner / auditor / viewer).
